@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>RSI-ICD | Execution-Grounded Self-Evolving Agents</title>
+  <meta name="description" content="A research blog about RSI-ICD, an execution-grounded method for evolving multi-agent clinical coding workflows.">
+  <link rel="stylesheet" href="../../research-blog.css">
+  <script src="../../research-blog.js" defer></script>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <header class="topbar">
+    <div class="wide wrap">
+      <a class="brand" href="../../">RSI<span>.</span></a>
+      <nav class="nav-links" aria-label="Project navigation">
+        <a href="../../">Home</a><a class="on" href="./">Research blog</a><a href="../../cv.html">CV</a><a href="https://github.com/heloanc">GitHub</a>
+      </nav>
+      <button class="lang" data-language type="button">中文</button>
+    </div>
+  </header>
+
+  <aside class="side-toc" id="sidetoc" aria-label="Contents">
+    <div class="st-head"><span class="st-title">Contents</span><span class="st-pct" id="stpct">0%</span><button class="st-hide" id="sthide" type="button" aria-label="Collapse contents">‹</button></div>
+    <div class="st-list"><span class="st-fill" id="stfill"></span><ol>
+      <li><a href="#tldr"><span class="n">·</span><span lang="en">In short</span><span lang="zh-CN">摘要</span></a></li>
+      <li><a href="#s1"><span class="n">1</span><span lang="en">Why evolve the workflow?</span><span lang="zh-CN">为什么要进化工作流？</span></a></li>
+      <li><a href="#s2"><span class="n">2</span><span lang="en">How RSI-ICD works</span><span lang="zh-CN">RSI-ICD 如何工作</span></a></li>
+      <li><a href="#s3"><span class="n">3</span><span lang="en">How we evaluate it</span><span lang="zh-CN">如何评测</span></a></li>
+      <li><a href="#s4"><span class="n">4</span><span lang="en">What changed</span><span lang="zh-CN">工作流改变了什么</span></a></li>
+      <li><a href="#s5"><span class="n">5</span><span lang="en">Results and interpretation</span><span lang="zh-CN">结果与解读</span></a></li>
+      <li><a href="#s6"><span class="n">6</span><span lang="en">What remains open</span><span lang="zh-CN">仍待回答的问题</span></a></li>
+      <li><a href="#cite"><span class="n">·</span><span lang="en">Citation</span><span lang="zh-CN">引用</span></a></li>
+    </ol></div>
+  </aside>
+
+  <main class="wide wrap">
+    <article class="prose">
+      <header class="post-head">
+        <div class="kicker">Research blog · Agent systems</div>
+        <h1 class="title"><span lang="en">Can an Agent Improve the Workflow That Runs It?</span><span lang="zh-CN">智能体能否改进运行自己的工作流？</span></h1>
+        <p class="dek"><span lang="en">RSI-ICD evolves prompts, executable structure, and revision experience from paired execution feedback—while keeping model weights fixed.</span><span lang="zh-CN">RSI-ICD 在固定模型权重的条件下，根据配对执行反馈共同进化提示词、可执行结构和修订经验。</span></p>
+        <div class="authors"><span><strong>Zhonghui Xie</strong></span><span><span lang="en">AI R&amp;D Engineer</span><span lang="zh-CN">AI 研发工程师</span></span></div>
+        <div class="byline"><span lang="en">First-author manuscript · Submitted to <em>Computer Methods and Programs in Biomedicine</em> · 2026</span><span lang="zh-CN">第一作者论文 · 在投 <em>Computer Methods and Programs in Biomedicine</em> · 2026</span></div>
+        <div class="btns"><a class="btn" href="../../cv.html"><span lang="en">View CV</span><span lang="zh-CN">查看简历</span> ↗</a><a class="btn ghost" href="mailto:1076694262@qq.com?subject=RSI-ICD%20research%20inquiry"><span lang="en">Discuss the project</span><span lang="zh-CN">交流项目</span></a></div>
+      </header>
+
+      <nav class="toc" aria-label="Article contents">
+        <a href="#tldr"><span class="n">·</span><span lang="en">In short</span><span lang="zh-CN">摘要</span></a>
+        <a href="#s1"><span class="n">1</span><span lang="en">Why evolve the workflow?</span><span lang="zh-CN">为什么要进化工作流？</span></a>
+        <a href="#s2"><span class="n">2</span><span lang="en">How RSI-ICD works</span><span lang="zh-CN">RSI-ICD 如何工作</span></a>
+        <a href="#s3"><span class="n">3</span><span lang="en">How we evaluate it</span><span lang="zh-CN">如何评测</span></a>
+        <a href="#s4"><span class="n">4</span><span lang="en">What changed</span><span lang="zh-CN">工作流改变了什么</span></a>
+        <a href="#s5"><span class="n">5</span><span lang="en">Results and interpretation</span><span lang="zh-CN">结果与解读</span></a>
+        <a href="#s6"><span class="n">6</span><span lang="en">What remains open</span><span lang="zh-CN">仍待回答的问题</span></a>
+        <a href="#cite"><span class="n">·</span><span lang="en">Citation</span><span lang="zh-CN">引用</span></a>
+      </nav>
+
+      <section id="tldr" class="callout def tldr">
+        <div class="lab"><span lang="en">In short</span><span lang="zh-CN">摘要</span></div>
+        <p lang="en">I built an execution-grounded evolution loop for clinical coding agents. A teacher edits prompts and executable routing; a frozen executor runs the revision; a verifier converts paired traces and outcomes into reusable experience. On MIMIC-IV ICD-9 / ICD-10, the evolved workflow improves the mean diagnosis/procedure micro-F1 by <strong>6.53 / 9.90 percentage points</strong> over the initial workflow, while using <strong>55.2% / 48.1% fewer execution tokens</strong> on common-success records.</p>
+        <p lang="zh-CN">我构建了一套执行反馈驱动的临床编码 Agent 自进化流程：教师智能体修改提示词和可执行路由，冻结后的执行器运行版本，验证器根据配对轨迹和结果沉淀可复用经验。在 MIMIC-IV ICD-9／ICD-10 上，进化后的工作流相对初始工作流，诊断／操作 Micro-F1 均值提升 <strong>6.53／9.90 个百分点</strong>，共同成功病例的执行 token 减少 <strong>55.2%／48.1%</strong>。</p>
+      </section>
+
+      <div class="stats">
+        <div><div class="n g">+6.53 pp</div><div class="t"><span lang="en">ICD-9 mean micro-F1</span><span lang="zh-CN">ICD-9 Micro-F1 均值提升</span></div></div>
+        <div><div class="n g">+9.90 pp</div><div class="t"><span lang="en">ICD-10 mean micro-F1</span><span lang="zh-CN">ICD-10 Micro-F1 均值提升</span></div></div>
+        <div><div class="n">−55.2%</div><div class="t"><span lang="en">ICD-9 execution tokens</span><span lang="zh-CN">ICD-9 执行 token 降幅</span></div></div>
+        <div><div class="n">−48.1%</div><div class="t"><span lang="en">ICD-10 execution tokens</span><span lang="zh-CN">ICD-10 执行 token 降幅</span></div></div>
+      </div>
+
+      <section id="s1">
+        <h2 class="sec"><span class="num">1</span><span lang="en">Why evolve the workflow?</span><span lang="zh-CN">为什么要进化工作流？</span></h2>
+        <p lang="en">A clinical coding agent is a chain of decisions: extract findings, plan terminology queries, retrieve candidates, select codes, and validate the result. A prompt change can improve one link while breaking the interface to the next. The object being optimized is therefore the <strong>executable workflow</strong>, not a single instruction.</p>
+        <p lang="zh-CN">临床编码 Agent 是一条连续的决策链：抽取病历证据、规划术语检索、整合候选编码、选择代码并校验结果。提示词的局部修改可能改善一个节点，却破坏上下游接口。因此需要优化的对象是<strong>可执行工作流</strong>，而不是一条孤立指令。</p>
+        <div class="callout"><div class="lab"><span lang="en">The design question</span><span lang="zh-CN">设计问题</span></div><p lang="en">Can execution feedback tell an agent which part of its program should change, and can the improvement survive the next batch of cases?</p><p lang="zh-CN">执行反馈能否告诉 Agent 应该修改程序的哪一部分？这次改进能否在下一批病例上保留下来？</p></div>
+        <p lang="en">RSI-ICD treats each completed revision as a frozen, testable program. This makes the unit of improvement a workflow version with a measurable before/after outcome, rather than an untracked sequence of model calls.</p>
+        <p lang="zh-CN">RSI-ICD 将每次完成的修订视为一个冻结、可测试的程序版本。这样，改进的基本单位就是具有前后对照结果的工作流版本，而不是一串无法追踪的模型调用。</p>
+      </section>
+
+      <section id="s2">
+        <h2 class="sec"><span class="num">2</span><span lang="en">How RSI-ICD works</span><span lang="zh-CN">RSI-ICD 如何工作</span></h2>
+        <p lang="en">The method separates three responsibilities. The <strong>Teacher</strong> edits the workflow. The <strong>Executor</strong> runs a frozen version on cases. The <strong>Verifier</strong> examines code diffs, traces, paired outcomes, and resource use, then writes conditional revision experience for the next round.</p>
+        <p lang="zh-CN">方法将三类职责分开。<strong>Teacher</strong> 负责修改工作流；<strong>Executor</strong> 在病例上运行冻结版本；<strong>Verifier</strong> 分析代码差异、执行轨迹、配对结果和资源消耗，为下一轮写入带条件的修订经验。</p>
+        <figure class="w"><img src="../../assets/rsi-framework.svg" alt="Teacher, Executor and Verifier form an execution-grounded evolution loop"><figcaption><span lang="en"><b>Figure 1.</b> The execution-grounded evolution loop. Exploration follows the latest executed revision; independent validation selects the version used for testing.</span><span lang="zh-CN"><b>图 1。</b>执行反馈驱动的进化循环。探索沿最新已执行版本继续，独立验证选出最终测试版本。</span></figcaption></figure>
+        <div class="cards">
+          <div class="card"><h4><span>Teacher</span><span class="pill">edit</span></h4><div class="sub"><span lang="en">Prompts + program</span><span lang="zh-CN">提示词与程序</span></div><p><span lang="en">Changes role instructions, routing, retrieval, candidate handling, and validation logic.</span><span lang="zh-CN">修改角色指令、路由、检索、候选处理和校验逻辑。</span></p></div>
+          <div class="card"><h4><span>Executor</span><span class="pill">freeze</span></h4><div class="sub"><span lang="en">A runnable revision</span><span lang="zh-CN">可运行的冻结版本</span></div><p><span lang="en">Runs the same cases before and after revision, recording outputs, traces, failures, and token use.</span><span lang="zh-CN">在修订前后运行同一批病例，记录输出、轨迹、失败和 token 消耗。</span></p></div>
+          <div class="card"><h4><span>Verifier</span><span class="pill">learn</span></h4><div class="sub"><span lang="en">Evidence-backed experience</span><span lang="zh-CN">有证据的经验</span></div><p><span lang="en">Links an observed failure to an edit and its measured outcome; later evidence can revise or retire the lesson.</span><span lang="zh-CN">将观察到的失败与具体修改及结果关联，后续证据可以修订或淘汰这条经验。</span></p></div>
+        </div>
+        <p lang="en">The model weights remain fixed. What evolves is the system around the model: the executable control flow, the information passed between roles, and the guidance used to propose the next revision.</p>
+        <p lang="zh-CN">模型权重保持不变。发生进化的是模型周围的系统：可执行控制流、角色之间传递的信息，以及用于提出下一次修订的经验指导。</p>
+      </section>
+
+      <section id="s3">
+        <h2 class="sec"><span class="num">3</span><span lang="en">How we evaluate it</span><span lang="zh-CN">如何评测</span></h2>
+        <p lang="en">The evaluation separates improvement from selection and testing. Each revision is frozen before execution. Evolution uses development batches and paired feedback; a separate validation set selects the archived workflow; held-out cases measure the final result. Failed executions are scored as empty predictions in the main full-cohort comparison.</p>
+        <p lang="zh-CN">评测将进化、选优和测试分开。每次修订在执行前冻结；进化阶段使用开发批次和配对反馈，独立验证集负责从归档版本中选出工作流，留出测试病例用于测量最终结果。在主要全量比较中，执行失败按空预测计分。</p>
+        <div class="callout def"><div class="lab"><span lang="en">Evaluation protocol</span><span lang="zh-CN">评测协议</span></div><ul><li><span lang="en"><strong>Task:</strong> MIMIC-IV ICD-9 and ICD-10 clinical coding.</span><span lang="zh-CN"><strong>任务：</strong>MIMIC-IV ICD-9 和 ICD-10 临床编码。</span></li><li><span lang="en"><strong>Test:</strong> 200 records per coding system, including failures.</span><span lang="zh-CN"><strong>测试：</strong>每个编码体系 200 例，包含执行失败。</span></li><li><span lang="en"><strong>Comparators:</strong> initial workflow, frozen transfer, GEPA, and SkillOpt.</span><span lang="zh-CN"><strong>对照：</strong>初始工作流、冻结迁移、GEPA 和 SkillOpt。</span></li><li><span lang="en"><strong>Metrics:</strong> diagnosis/procedure micro-F1, failure count, and execution tokens.</span><span lang="zh-CN"><strong>指标：</strong>诊断／操作 Micro-F1、失败数和执行 token。</span></li></ul></div>
+        <p lang="en">This design also keeps two questions separate: <em>does the workflow code improve the answer?</em> and <em>does the evolved workflow use less computation?</em> The token accounting below measures deployment execution and keeps optimization consumption separate.</p>
+        <p lang="zh-CN">这种设计还将两个问题分开：<em>工作流代码是否改善结果？</em>以及<em>进化后的工作流是否使用更少计算量？</em>下面的 token 统计针对部署执行阶段，优化阶段的消耗单独核算。</p>
+      </section>
+
+      <section id="s4">
+        <h2 class="sec"><span class="num">4</span><span lang="en">What changed in the evolved workflow?</span><span lang="zh-CN">进化后的工作流改变了什么？</span></h2>
+        <p lang="en">The selected workflow keeps the original extract–plan–retrieve–code chain, but changes how evidence and candidates move through it. Diagnosis and procedure extraction become separate paths. Evidence repair handles rejected or incomplete findings. Retrieval candidates are compacted into locally indexed entries, while deterministic code mapping and evidence checks remain outside the model.</p>
+        <p lang="zh-CN">最终工作流保留了原有的“抽取—规划—检索—编码”链路，但改变了证据和候选项的传递方式。诊断与操作抽取被拆成两条路径；证据修复处理被拒绝或不完整的发现；检索候选被压缩为本地编号条目，确定性的代码映射与证据校验仍放在模型外部执行。</p>
+        <div class="grid2">
+          <div class="card"><h4><span lang="en">Information flow</span><span lang="zh-CN">信息流</span></h4><p><span lang="en">Pass the evidence needed by the next role instead of repeatedly forwarding the full terminology payload.</span><span lang="zh-CN">向下一节点传递真正需要的证据，减少完整术语候选在链路中的重复传递。</span></p></div>
+          <div class="card"><h4><span lang="en">Recovery logic</span><span lang="zh-CN">恢复逻辑</span></h4><p><span lang="en">Use bounded retries and deterministic checks for output contracts, code identifiers, duplicates, and evidence references.</span><span lang="zh-CN">对输出格式、编码标识、重复项和证据引用使用有边界的重试与确定性校验。</span></p></div>
+        </div>
+        <p lang="en">Trace review of 24 stratified improvement and regression cases located the earliest divergence in extraction for 13 cases, evidence handling for 7, retrieval for 3, and selection for 1. Twenty-one explanations were trace-supported; three remained plausible but not isolated.</p>
+        <p lang="zh-CN">对 24 个分层改进／退化病例进行轨迹复核后，最早分歧点有 13 例位于抽取、7 例位于证据处理、3 例位于检索、1 例位于选择。其中 21 条解释有轨迹支持，3 条仍然只是合理推断，尚未单独隔离。</p>
+      </section>
+
+      <section id="s5">
+        <h2 class="sec"><span class="num">5</span><span lang="en">Results and interpretation</span><span lang="zh-CN">结果与解读</span></h2>
+        <p lang="en">Across the full 200-record test cohorts, RSI-ICD improves over the initial workflow on both coding systems. The improvement is accompanied by a large reduction in execution tokens on records where the compared workflows complete successfully.</p>
+        <p lang="zh-CN">在每个体系完整的 200 例测试集上，RSI-ICD 均优于初始工作流。同时，在对照工作流都成功完成的病例上，单例执行 token 明显下降。</p>
+        <div class="result-table"><table><thead><tr><th><span lang="en">Measure</span><span lang="zh-CN">指标</span></th><th>ICD-9</th><th>ICD-10</th></tr></thead><tbody><tr><td><span lang="en">Mean diagnosis/procedure micro-F1 gain</span><span lang="zh-CN">诊断／操作 Micro-F1 均值提升</span></td><td class="up">+6.53 pp</td><td class="up">+9.90 pp</td></tr><tr><td><span lang="en">Execution-token reduction</span><span lang="zh-CN">执行 token 降幅</span></td><td>55.2%</td><td>48.1%</td></tr><tr><td><span lang="en">Common-success records</span><span lang="zh-CN">共同成功病例</span></td><td>192</td><td>188</td></tr></tbody></table></div>
+        <figure class="w"><img src="../../assets/rsi-results.svg" alt="Bar chart showing F1 gains and execution-token reductions for ICD-9 and ICD-10"><figcaption><span lang="en"><b>Figure 2.</b> Quality gain and execution-token reduction relative to the initial workflow. The two panels use the cohorts specified above.</span><span lang="zh-CN"><b>图 2。</b>相对初始工作流的质量提升和执行 token 降幅。两个面板使用上文所述病例集合。</span></figcaption></figure>
+        <p lang="en">Three independent ICD-10 optimization runs reproduce gains of 7.81–9.59 percentage points over the initial agent. In the joint full-validation and format-recovery control, the full program uses 48.8% fewer execution tokens than prompt-only revision, while the 1.55-point F1 difference has a confidence interval spanning zero.</p>
+        <p lang="zh-CN">三次独立 ICD-10 优化相对初始 Agent 均取得 7.81–9.59 个百分点的提升。在全验证集选优与统一格式恢复的联合控制中，完整程序较仅修订提示词减少 48.8% 的执行 token，但 F1 差值为 1.55 个百分点，置信区间跨零。</p>
+        <div class="callout res"><div class="lab"><span lang="en">The practical reading</span><span lang="zh-CN">实际解读</span></div><p lang="en">The strongest consistent contribution is the quality–efficiency tradeoff: the evolved executor improves coding over the initial workflow while distributing work across smaller, more specialized calls. Structural editing should therefore be judged together with token use, failures, and selection quality.</p><p lang="zh-CN">最稳定的贡献是质量—效率权衡：进化后的执行器在提升编码效果的同时，将工作拆分到更小、更专门化的调用中。因此，结构修改应与 token 消耗、失败数和选优质量一起评价。</p></div>
+      </section>
+
+      <section id="s6">
+        <h2 class="sec"><span class="num">6</span><span lang="en">What remains open</span><span lang="zh-CN">仍待回答的问题</span></h2>
+        <p lang="en">The current results measure code-set agreement and execution resources. They do not yet measure coder correction time, billing impact, or prospective clinical use. The manuscript also separates optimization cost from deployment execution cost; meta-agent consumption and unknown usage are retained in the research ledger rather than folded into the headline token reduction.</p>
+        <p lang="zh-CN">当前结果衡量的是编码集合一致性和执行资源，还没有衡量编码员修正时间、计费影响或前瞻性临床使用。论文将优化成本与部署执行成本分开统计；元智能体消耗和未知用量保留在研究账本中，没有并入 headline token 降幅。</p>
+        <p lang="en">The next useful step is a deployment-oriented study that records accepted suggestions, human corrections, and time per record alongside exact coding metrics. For the method itself, the fixed compact baseline is the key control needed to separate gains from simple removal of repeated retrieval metadata.</p>
+        <p lang="zh-CN">下一步更有价值的是开展面向实际部署的研究，在精确编码指标之外记录采纳建议、人工修正和单例耗时。对于方法本身，还需要加入固定精简基线，以区分自进化带来的收益与单纯删除重复检索元数据的收益。</p>
+      </section>
+
+      <section id="cite">
+        <h2 class="sec"><span lang="en">Citation</span><span lang="zh-CN">引用</span></h2>
+        <p lang="en">If this project is useful to your work, please cite the manuscript as:</p><p lang="zh-CN">如果这个项目对你的工作有帮助，可以按下面的格式引用：</p>
+        <pre class="bib">@article{xie2026rsiicd,
+  title   = {RSI-ICD: Evolving Multi-Agent Workflows
+             for Accurate and Efficient Clinical Coding},
+  author  = {Xie, Zhonghui},
+  journal = {Computer Methods and Programs in Biomedicine},
+  year    = {2026},
+  note    = {Manuscript submitted}
+}</pre>
+        <p class="muted"><span lang="en">The implementation repository is currently private. Shareable research materials are available on request.</span><span lang="zh-CN">代码仓库目前为私有，部分研究材料可联系获取。</span></p>
+      </section>
+    </article>
+  </main>
+  <footer class="wide wrap"><span>© 2026 Zhonghui Xie · <span lang="en">Execution-grounded agent evolution</span><span lang="zh-CN">执行反馈驱动的智能体进化</span></span><span><a href="https://github.com/heloanc">GitHub</a> · <a href="mailto:1076694262@qq.com">Email</a></span></footer>
+</body>
+</html>

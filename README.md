@@ -7,7 +7,10 @@ Plain HTML, CSS and JavaScript; no build step, external fonts, analytics, or thi
 ## Files
 
 - `index.html`: introduction, projects, manuscript, experience and education.
-- `rsi-icd.html`: RSI-ICD method and results.
+- `rsi/blog/index.html`: bilingual RSI-ICD research blog at https://heloanc.github.io/rsi/blog/.
+- `research-blog.css` and `research-blog.js`: blog layout, language, reading progress and contents navigation.
+- `rsi-icd.html`: legacy RSI-ICD overview.
+- `assets/rsi-results.svg`: summary results chart.
 - `cv.html`: public CV with print / save-as-PDF support.
 - `styles.css`: layout, mobile and print styles.
 - `site.js`: language preference and print action.
