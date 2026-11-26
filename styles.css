@@ -3,3 +3,23 @@
 @media(max-width:700px){.wrap{width:calc(100% - 36px)}.nav{min-height:65px;gap:12px;flex-wrap:wrap;padding:12px 0}.nav-links{gap:16px;font-size:13px}.nav-links .desktop-link{display:none}.wordmark{font-size:20px}.hero{padding-top:40px;grid-template-columns:1fr;gap:20px}.identity{display:none}h1{font-size:43px}.native-name{font-size:18px;margin-left:8px}.hero .eyebrow{font-size:11px}.featured{grid-template-columns:1fr;gap:23px}.featured .figure{max-width:330px}.project-list{grid-template-columns:1fr;gap:25px}.timeline-row{grid-template-columns:1fr;gap:2px}.section{padding-top:27px}.section-heading{align-items:start}h2{font-size:27px}.news{grid-template-columns:73px 1fr;gap:8px}.metric-row{gap:15px}.metric strong{font-size:24px}.article{padding:32px 0}.article h1{font-size:34px}.footer{flex-direction:column;gap:5px}.article th,.article td{padding:9px 10px}.contact-links a+a:before{margin:0 11px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 @media print{.site-header,.footer,.skip,.no-print{display:none!important}.wrap{width:100%}.article{padding:0}.cv .section{padding:16px 0;break-inside:avoid}.cv h1{font-size:30px}.cv h2{font-size:22px}.cv .timeline-row{margin-bottom:14px}body{font-size:12px;background:white}a{color:inherit}h2,h3{break-after:avoid}.article p,.article li{font-size:12px}.timeline-row{grid-template-columns:135px 1fr}}
+
+/* Research-lab visual layer: a restrained neural network behind the homepage. */
+body.home-page{position:relative;overflow-x:hidden;background:radial-gradient(circle at 75% 16%,rgba(78,151,137,.10),transparent 27rem),radial-gradient(circle at 14% 38%,rgba(74,116,157,.07),transparent 25rem),var(--paper)}
+.network-bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.82}
+.home-page .site-header,.home-page main,.home-page .footer{position:relative;z-index:1}
+.home-page .site-header{background:rgba(253,254,252,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.home-page .hero{position:relative;isolation:isolate;padding-top:78px;padding-bottom:62px}
+.home-page .hero:before{content:'';position:absolute;z-index:-1;left:-28px;right:-28px;top:0;bottom:0;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.58),rgba(241,249,243,.26) 55%,rgba(228,240,247,.32));border-top:1px solid rgba(255,255,255,.72);border-bottom:1px solid rgba(213,226,219,.62);clip-path:polygon(0 7%,100% 0,100% 92%,0 100%)}
+.home-page .eyebrow{display:flex;align-items:center;gap:10px}
+.home-page .eyebrow:before{content:'';display:inline-block;width:27px;height:1px;background:var(--accent);box-shadow:8px 0 0 rgba(24,117,106,.28),16px 0 0 rgba(24,117,106,.12)}
+.home-page .identity{background:linear-gradient(145deg,rgba(243,246,239,.78),rgba(226,239,237,.55));box-shadow:0 18px 45px rgba(50,91,75,.10),inset 0 0 35px rgba(255,255,255,.7);backdrop-filter:blur(4px)}
+.home-page .identity:after{content:'';position:absolute;width:8px;height:8px;border-radius:50%;right:22px;top:21px;background:#57a999;box-shadow:0 0 0 5px rgba(87,169,153,.12),0 0 20px rgba(87,169,153,.7);animation:signal-pulse 2.8s ease-in-out infinite}
+.home-page .section{border-color:rgba(208,222,215,.78);background:rgba(253,254,252,.17)}
+.home-page .featured .figure{background:rgba(255,255,255,.72);box-shadow:0 12px 35px rgba(41,77,70,.07);backdrop-filter:blur(5px)}
+.home-page .metric-row{border-color:rgba(208,222,215,.82)}
+.home-page .project-list article,.home-page .publication{position:relative}
+.home-page .project-list article:before{content:'';position:absolute;left:-13px;top:4px;width:3px;height:38px;border-radius:3px;background:linear-gradient(var(--accent),transparent);opacity:.55}
+@keyframes signal-pulse{0%,100%{opacity:.55;transform:scale(.9)}50%{opacity:1;transform:scale(1.2)}}
+@media(max-width:700px){.network-bg{opacity:.58}.home-page .hero{padding-top:49px;padding-bottom:46px}.home-page .hero:before{left:-18px;right:-18px;clip-path:polygon(0 4%,100% 0,100% 97%,0 100%)}.home-page .project-list article:before{left:-9px}}
+@media(prefers-reduced-motion:reduce){.network-bg{display:none}.home-page .identity:after{animation:none}}

@@ -17,3 +17,7 @@ Plain HTML, CSS and JavaScript; no build step, external fonts, analytics, or thi
 - `assets/rsi-framework.svg`: original project overview diagram.
 
 Both languages are in the HTML. Keep the English and Chinese versions consistent when editing. Research statements reflect the manuscript at publication of this website; no clinical records or private implementation files are included.
+
+## Animated background
+
+`network.js` and `network.css` provide the shared decorative canvas for the home and RSI blog pages. It runs at up to 30 fps, caps pixel density, reduces node count on phones, pauses in hidden tabs, and respects reduced-motion preferences. The bottom-right control pauses/resumes it. Homepage-specific visual styles are in `styles.css`.
