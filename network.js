@@ -6,57 +6,112 @@
   if (!ctx) return;
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   const button = document.querySelector('[data-pause-network]');
-  let width = 0, height = 0, ratio = 1, points = [], raf = 0, last = 0, elapsed = 0, paused = false;
-  const palette = ['47,128,119', '66,118,160', '92,142,135'];
-  const random = (min, max) => min + Math.random() * (max - min);
+  let width = 0, height = 0, ratio = 1, raf = 0, last = 0, elapsed = 0, paused = false;
+  // Two continuous folded surfaces, composed as an asymmetric frame around the text.
+  // Stable topology and deterministic placement prevent popping when the viewport changes.
+  const tau = Math.PI * 2;
+  function surface(u, v, side) {
+    const mobile = width < 700;
+    const scale = Math.min(width, 1600);
+    const time = elapsed * .075;
+    const phase = u * tau * .85 + time + side * 2;
+    const center = side === 0
+      ? width * .045 + Math.sin(phase + .7) * scale * .07
+      : width * .965 + Math.sin(phase + 1.4) * scale * .075;
+    const breadth = scale * (mobile ? .21 : .13) * (.68 + .32 * Math.sin(u * Math.PI));
+    const twist = phase * .9 + v * .65;
+    const depth = Math.sin(twist) * v;
+    return {
+      x: center + v * breadth * Math.cos(twist) + Math.sin(u * 8 + v * 2 + time) * scale * .018,
+      y: -height * .12 + u * height * 1.24 + Math.sin(twist) * v * height * .075,
+      z: depth,
+      alpha: .24 + .76 * Math.pow(Math.sin(Math.PI * u), .7)
+    };
+  }
+  function color(side, alpha) {
+    return 'rgba(' + (side ? '104,119,169' : '63,140,131') + ',' + alpha + ')';
+  }
   const resize = () => {
     width = innerWidth; height = innerHeight;
     ratio = Math.min(devicePixelRatio || 1, 2);
     canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
-    const cols = width < 700 ? 4 : Math.min(13, Math.ceil(width / 130));
-    const rows = Math.min(8, Math.ceil(height / 140));
-    points = Array.from({length: cols * rows}, (_, index) => ({
-      x: ((index % cols) + random(.12, .88)) / cols * width,
-      y: (Math.floor(index / cols) + random(.12, .88)) / rows * height,
-      phase: random(0, Math.PI * 2), color: palette[index % palette.length],
-      r: index % 9 === 0 ? 3 : 1.5
-    }));
     paint();
   };
   function paint() {
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     ctx.clearRect(0, 0, width, height);
-    const positions = points.map(p => ({...p,
-      x: p.x + Math.sin(elapsed * .16 + p.phase) * 18,
-      y: p.y + Math.cos(elapsed * .12 + p.phase) * 14
-    }));
-    const distanceLimit = width < 700 ? 155 : 195;
-    // The center stays quiet so that body text remains easy to read.
-    const opacityAt = x => .35 + .65 * Math.pow(Math.abs(x - width / 2) / (width / 2), .7);
-    for (let i = 0; i < positions.length; i++) {
-      const a = positions[i];
-      for (let j = i + 1; j < positions.length; j++) {
-        const b = positions[j], distance = Math.hypot(a.x - b.x, a.y - b.y);
-        if (distance >= distanceLimit) continue;
-        const alpha = (1 - distance / distanceLimit) * .38 * opacityAt((a.x + b.x) / 2);
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
-        ctx.strokeStyle = 'rgba(' + a.color + ',' + alpha + ')';
-        ctx.lineWidth = .8; ctx.stroke();
-        // A few signals travel along edges rather than flashing the whole mesh.
-        if ((i * 7 + j) % 11 === 0) {
-          const t = (elapsed * .12 + a.phase) % 1;
-          ctx.beginPath(); ctx.arc(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, 1.9, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(' + a.color + ',' + .65 * opacityAt(a.x) + ')'; ctx.fill();
+    const mobile = width < 700;
+    // Diffuse atmosphere blends into the paper instead of forming a rectangular panel.
+    for (const [x, y, radius, rgb] of [
+      [width * .97, height * .28, Math.max(240, width * .31), '166,175,218'],
+      [width * .02, height * .72, Math.max(210, width * .28), '153,201,188']
+    ]) {
+      const glow = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      glow.addColorStop(0, 'rgba(' + rgb + ',.19)');
+      glow.addColorStop(.5, 'rgba(' + rgb + ',.07)');
+      glow.addColorStop(1, 'rgba(' + rgb + ',0)');
+      ctx.fillStyle = glow; ctx.fillRect(0, 0, width, height);
+    }
+    for (let side = 0; side < 2; side++) {
+      const strands = mobile ? 7 : 11;
+      // Smooth longitudinal filaments give the network its direction and depth.
+      for (let j = 0; j < strands; j++) {
+        const v = -1 + j / (strands - 1) * 2;
+        ctx.beginPath();
+        for (let step = 0; step <= 90; step++) {
+          const p = surface(step / 90, v, side);
+          if (!step) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+        }
+        ctx.strokeStyle = color(side, .11 + .08 * (1 - Math.abs(v)));
+        ctx.lineWidth = j % 3 === 0 ? .85 : .5; ctx.stroke();
+      }
+      // Sparse curved cross-links, with denser nodes only on the visible side of the fold.
+      for (let row = 1; row < 24; row++) {
+        const u = row / 24;
+        ctx.beginPath();
+        for (let step = 0; step <= 36; step++) {
+          const p = surface(u, -1 + step / 18, side);
+          if (!step) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+        }
+        ctx.strokeStyle = color(side, .10 * Math.sin(u * Math.PI));
+        ctx.lineWidth = .55; ctx.stroke();
+        for (let j = 0; j < strands; j++) {
+          if ((row + j * 3 + side) % 4 !== 0) continue;
+          const p = surface(u, -1 + j / (strands - 1) * 2, side);
+          const radius = (row + j) % 7 === 0 ? 2.5 : 1.25;
+          ctx.beginPath(); ctx.arc(p.x, p.y, radius, 0, tau);
+          ctx.fillStyle = color(side, p.alpha * (.35 + .12 * p.z)); ctx.fill();
         }
       }
-      const alpha = opacityAt(a.x) * (.42 + Math.sin(elapsed * .8 + a.phase) * .1);
-      if (a.r > 2) {
-        ctx.beginPath(); ctx.arc(a.x, a.y, 10, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(' + a.color + ',' + alpha * .12 + ')'; ctx.fill();
+      // Signals follow the curves; their soft tails imply information flow.
+      for (let k = 0; k < (mobile ? 3 : 5); k++) {
+        const u = (k * .197 + elapsed * .018 + side * .11) % 1;
+        const v = Math.sin(k * 2.4 + side) * .85;
+        const p = surface(u, v, side);
+        ctx.beginPath();
+        for (let step = 0; step <= 12; step++) {
+          const q = surface(Math.max(0, u - .035 + step / 12 * .035), v, side);
+          if (!step) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+        }
+        ctx.strokeStyle = color(side, p.alpha * .32); ctx.lineWidth = 1.3; ctx.stroke();
+        const halo = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 12);
+        halo.addColorStop(0, color(side, .2 * p.alpha)); halo.addColorStop(1, color(side, 0));
+        ctx.fillStyle = halo; ctx.fillRect(p.x - 12, p.y - 12, 24, 24);
+        ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, tau);
+        ctx.fillStyle = color(side, p.alpha * .64); ctx.fill();
       }
-      ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(' + a.color + ',' + alpha + ')'; ctx.fill();
     }
+    // A soft central veil preserves negative space without a visible panel edge.
+    ctx.globalCompositeOperation = 'destination-out';
+    const veil = ctx.createLinearGradient(0, 0, width, 0);
+    veil.addColorStop(0, 'rgba(0,0,0,0)');
+    veil.addColorStop(.2, 'rgba(0,0,0,.25)');
+    veil.addColorStop(.34, 'rgba(0,0,0,.94)');
+    veil.addColorStop(.67, 'rgba(0,0,0,.94)');
+    veil.addColorStop(.82, 'rgba(0,0,0,.25)');
+    veil.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = veil; ctx.fillRect(0, 0, width, height);
+    ctx.globalCompositeOperation = 'source-over';
   }
   function tick(now) {
     raf = 0;

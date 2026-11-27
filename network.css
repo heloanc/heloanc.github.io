@@ -1,14 +1,27 @@
 .network-bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.9}
 .motion-toggle{position:fixed;right:18px;bottom:16px;z-index:40;display:flex;align-items:center;gap:7px;background:rgba(250,253,252,.9);border:1px solid #ceddd8;border-radius:30px;padding:7px 12px;color:#526b65;font:11px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer;box-shadow:0 3px 14px #28483c0b;backdrop-filter:blur(10px)}
 .motion-toggle:focus-visible{outline:2px solid #18756a;outline-offset:4px}.motion-icon{font-size:12px;letter-spacing:-2px;margin-right:3px}.motion-toggle[aria-pressed=true] .motion-icon{letter-spacing:0}
-.research-page{background:radial-gradient(ellipse at 87% 15%,#dcebed88,transparent 45%),#f5f7f9;isolation:isolate}
+.research-page{background:#f8f9fb;isolation:isolate}
 .research-page main,.research-page footer{position:relative;z-index:1}
-.research-page .prose{background:linear-gradient(90deg,#f5f7f900,#f5f7f9b8 7%,#f5f7f9b8 93%,#f5f7f900)}
+.research-page .prose{background:transparent}
 .research-page .post-head{position:relative}.research-page .kicker{color:#307e7e}
 .research-page .btn{box-shadow:0 5px 20px #26475f15}
 .research-page .stats{background:#f5f9fa99}
-.home-page .network-bg{mask-image:linear-gradient(#000,#000);opacity:.9}
+.home-page .network-bg{opacity:1}
 .network-paused .identity:after{animation-play-state:paused}
 @media(max-width:700px){.network-bg,.home-page .network-bg{opacity:.58}.motion-toggle{right:12px;bottom:10px;padding:6px 10px}footer{padding-bottom:65px!important}}
 @media(prefers-reduced-motion:reduce){.network-bg,.motion-toggle{display:none!important}}
 @media print{.network-bg,.motion-toggle{display:none!important}}
+
+/* Soft paper, generous negative space, and an unboxed identity. */
+body.home-page{background:#fbfcfa}
+.home-page .hero:before{display:none}
+.home-page .section{background:transparent}
+.home-page .identity{border:0;border-radius:50%;width:184px;height:184px;background:radial-gradient(circle at 36% 32%,#ffffffd9,#e6efea55 65%,#e0e9ef22);box-shadow:inset 0 0 40px #ffffff99,0 20px 60px #698d8410;backdrop-filter:blur(2px)}
+.home-page .identity:before{width:162px;height:162px;left:11px;top:11px;border-color:#9dbeb044;transform:rotate(-24deg) scaleX(.79)}
+.home-page .identity:after{animation:none;width:6px;height:6px;right:30px;top:28px;background:#89b6a6;box-shadow:0 0 0 5px #89b6a610,0 0 18px #89b6a633}
+.home-page .identity small{font-size:8px;letter-spacing:1.6px;margin-top:17px}
+.home-page .initials{font-size:56px;color:#426a5d}
+.motion-toggle{opacity:.7;transition:opacity .2s,border-color .2s;box-shadow:none}
+.motion-toggle:hover,.motion-toggle:focus-visible{opacity:1;border-color:#8fafa3}
+@media(max-width:700px){.network-bg,.home-page .network-bg{opacity:.65}}
