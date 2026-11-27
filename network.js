@@ -10,11 +10,14 @@
   // Two continuous folded surfaces, composed as an asymmetric frame around the text.
   // Stable topology and deterministic placement prevent popping when the viewport changes.
   const tau = Math.PI * 2;
+  let scrollPosition = Math.max(0, window.scrollY);
+  // Bounded camera travel keeps the surfaces in frame even on long articles.
+  const travel = () => height * .22 * Math.tanh(scrollPosition / Math.max(height, 1) * .65);
   function surface(u, v, side) {
     const mobile = width < 700;
     const scale = Math.min(width, 1600);
     const time = elapsed * .075;
-    const phase = u * tau * .85 + time + side * 2;
+    const phase = u * tau * .85 + time + side * 2 + scrollPosition * .00024;
     const center = side === 0
       ? width * .045 + Math.sin(phase + .7) * scale * .07
       : width * .965 + Math.sin(phase + 1.4) * scale * .075;
@@ -23,7 +26,7 @@
     const depth = Math.sin(twist) * v;
     return {
       x: center + v * breadth * Math.cos(twist) + Math.sin(u * 8 + v * 2 + time) * scale * .018,
-      y: -height * .12 + u * height * 1.24 + Math.sin(twist) * v * height * .075,
+      y: -height * .22 + u * height * 1.55 + Math.sin(twist) * v * height * .075 - travel() * (.65 + (depth + 1) * .3),
       z: depth,
       alpha: .24 + .76 * Math.pow(Math.sin(Math.PI * u), .7)
     };
@@ -43,8 +46,8 @@
     const mobile = width < 700;
     // Diffuse atmosphere blends into the paper instead of forming a rectangular panel.
     for (const [x, y, radius, rgb] of [
-      [width * .97, height * .28, Math.max(240, width * .31), '166,175,218'],
-      [width * .02, height * .72, Math.max(210, width * .28), '153,201,188']
+      [width * .97, height * .28 - travel() * .22, Math.max(240, width * .31), '166,175,218'],
+      [width * .02, height * .72 - travel() * .32, Math.max(210, width * .28), '153,201,188']
     ]) {
       const glow = ctx.createRadialGradient(x, y, 0, x, y, radius);
       glow.addColorStop(0, 'rgba(' + rgb + ',.19)');
@@ -116,7 +119,9 @@
   function tick(now) {
     raf = 0;
     if (last === 0 || now - last >= 1000 / 30) {
-      elapsed += last ? Math.min((now - last) / 1000, .1) : 0;
+      const delta = last ? Math.min((now - last) / 1000, .1) : 1 / 30;
+      elapsed += last ? delta : 0;
+      scrollPosition += (Math.max(0, window.scrollY) - scrollPosition) * (1 - Math.exp(-delta * 9));
       last = now; paint();
     }
     raf = requestAnimationFrame(tick);
