@@ -20,6 +20,4 @@ Both languages are in the HTML. Keep the English and Chinese versions consistent
 
 ## Animated background
 
-`network.js` and `network.css` provide a shared canvas of two slowly folding curved networks with soft teal/blue halos and traveling signals. The center stays clear for reading. These assets provide the decorative canvas for the home and RSI blog pages. It runs at up to 30 fps, caps pixel density, reduces node count on phones, pauses in hidden tabs, and respects reduced-motion preferences. The bottom-right control pauses/resumes it. Homepage-specific visual styles are in `styles.css`.
-
-Scrolling also moves the network through a smoothed depth-dependent camera offset. The distant halos move more slowly; camera travel is bounded to keep the composition in frame on long articles. Pause and reduced-motion settings stop this effect too.
+`network.js` and `network.css` render a shared spatial node network on the home and RSI blog pages. Curved links and signals connect gently expanding, rotating layers. Normalized reading progress increases spacing, fades selected nodes and edges, and shifts the center with easing. The reading column stays quiet. The animation runs at up to 30 fps, caps pixel density, uses fewer nodes on phones, stops in hidden tabs, and respects reduced-motion preferences. The bottom-right control pauses all motion, including scroll-driven changes.
